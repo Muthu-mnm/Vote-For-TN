@@ -195,6 +195,7 @@ sequenceDiagram
 ## 🎨 Frontend Pages
 
 ### 1. Voter Login — [voter_login.html](file:///e:/voting%20app/voter_login.html)
+![Voter Login](assets/1_voter_login.png)
 - **Tabbed interface**: Login / Register
 - **Registration** collects: Voter ID (`ABC1234567` format), Full Name, Constituency (15 TN constituencies), DOB
 - **Login** requires: Voter ID + DOB
@@ -203,6 +204,7 @@ sequenceDiagram
 - Links to Admin login
 
 ### 2. Voting Page — [tamil_nadu_election_poll.html](file:///e:/voting%20app/tamil_nadu_election_poll.html)
+![Voting Page](assets/2_voting_page.png)
 - **Auth-gated**: Redirects to `/` if no voter token
 - Displays voter info bar (name, voter ID, constituency)
 - **5 party cards** in a grid: TVK, DMK, ADMK, NTK, NOTA
@@ -212,12 +214,14 @@ sequenceDiagram
 - Logout clears localStorage
 
 ### 3. Admin Login — [admin_login.html](file:///e:/voting%20app/admin_login.html)
+![Admin Login](assets/3_admin_login.png)
 - Gold/amber themed UI with "Restricted Access" badge
 - Username + Password form with show/hide toggle
 - Stores `admin_token` in `localStorage`
 - Auto-redirects authenticated admins to `/dashboard`
 
 ### 4. Results Dashboard — [dashboard.html](file:///e:/voting%20app/dashboard.html)
+![Live Dashboard](assets/4_dashboard.png)
 - **Auth-gated**: Redirects to `/admin` if no admin token
 - **Real-time updates** via Socket.IO + 5-second polling fallback
 - **Components**:
