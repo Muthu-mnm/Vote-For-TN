@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voter Login — Tamil Nadu Election 2026</title>
+<meta name="description" content="Authenticate with your Voter ID to cast your vote in the Tamil Nadu Election">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #06080f;
+    --bg-secondary: #0c0e1a;
+    --bg-card: #111425;
+    --border: rgba(255,255,255,0.04);
+    --text-primary: #eaecf5;
+    --text-secondary: #7c82a0;
+    --text-muted: #4a4f6a;
+    --accent: #6c8cff;
+    --accent-light: #8ba6ff;
+    --accent-glow: rgba(108,140,255,0.10);
+    --success: #34d399;
+    --danger: #ff5c5c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-primary);
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 2rem 0;
+  }
+
+  /* Ambient */
+  .ambient { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .ambient .orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.07; }
+  .ambient .orb-1 { width:600px;height:600px;background:#6c8cff;top:-200px;left:-100px;animation:d1 20s ease-in-out infinite; }
+  .ambient .orb-2 { width:400px;height:400px;background:#34d399;bottom:-150px;right:-80px;animation:d2 24s ease-in-out infinite; }
+  .ambient .orb-3 { width:300px;height:300px;background:#ff8a5c;top:50%;left:60%;animation:d3 18s ease-in-out infinite; }
+  @keyframes d1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(70px,50px)} }
+  @keyframes d2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-50px,-40px)} }
+  @keyframes d3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-30px,20px)} }
+
+  .login-container {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 460px;
+    padding: 0 1.5rem;
+    animation: fadeUp 0.6s ease;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+  .login-card {
+    background: linear-gradient(160deg, var(--bg-card) 0%, rgba(17,20,37,0.5) 100%);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px 36px;
+    backdrop-filter: blur(24px);
+    position: relative;
+    overflow: hidden;
+  }
+  .login-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), #34d399);
+    opacity: 0.7;
+  }
+
+  .login-icon {
+    font-size: 48px;
+    text-align: center;
+    display: block;
+    margin-bottom: 8px;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+
+  .login-title {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #eaecf5 0%, #6c8cff 70%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+  }
+  .login-subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 28px;
+    font-weight: 500;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    padding: 4px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px 0;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    border-radius: 11px;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .tab-btn.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 16px rgba(108,140,255,0.3);
+  }
+  .tab-btn:not(.active):hover { color: var(--text-secondary); }
+
+  /* Form */
+  .form-group {
+    margin-bottom: 18px;
+  }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .form-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    transition: all 0.25s;
+    outline: none;
+  }
+  .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(108,140,255,0.1);
+    background: rgba(108,140,255,0.03);
+  }
+  .form-input::placeholder { color: var(--text-muted); }
+
+  select.form-input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237c82a0' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+  }
+  select.form-input option { background: #111425; color: #eaecf5; }
+
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #5a7bff, #6c8cff, #7d9dff);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 4px 24px rgba(108,140,255,0.25), inset 0 1px 0 rgba(255,255,255,0.15);
+    letter-spacing: 0.3px;
+    margin-top: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+  .submit-btn::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+  }
+  .submit-btn:hover::after { transform: translateX(100%); }
+  .submit-btn:hover {
+    box-shadow: 0 8px 36px rgba(108,140,255,0.35);
+    transform: translateY(-2px);
+  }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  .error-msg {
+    color: var(--danger);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 12px;
+    min-height: 18px;
+  }
+  .success-msg {
+    color: var(--success);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 12px;
+  }
+
+  .form-divider {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    margin: 20px 0;
+    position: relative;
+  }
+  .form-divider::before, .form-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 38%;
+    height: 1px;
+    background: var(--border);
+  }
+  .form-divider::before { left: 0; }
+  .form-divider::after { right: 0; }
+
+  .admin-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .admin-link a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .admin-link a:hover { text-decoration: underline; }
+
+  .id-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  .hidden { display: none; }
+
+  /* ECI badge */
+  .eci-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .eci-badge span { font-size: 16px; }
+
+  @media (max-width: 480px) {
+    .login-card { padding: 28px 22px; border-radius: 20px; }
+    .login-title { font-size: 22px; }
+    .login-container { padding: 0 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<div class="login-container">
+  <div class="login-card">
+    <span class="login-icon">🗳️</span>
+    <h1 class="login-title">Voter Authentication</h1>
+    <p class="login-subtitle">Tamil Nadu State Election 2026</p>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">Login</button>
+      <button class="tab-btn" id="tabRegister" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label" for="loginVoterId">Voter ID</label>
+        <input class="form-input" type="text" id="loginVoterId" placeholder="e.g. ABC1234567" required autocomplete="off" style="text-transform: uppercase;">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="loginDob">Date of Birth</label>
+        <input class="form-input" type="date" id="loginDob" required>
+      </div>
+      <button class="submit-btn" type="submit" id="loginBtn">🔐 Login & Vote</button>
+      <div class="error-msg" id="loginError"></div>
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
+      <div class="form-group">
+        <label class="form-label" for="regVoterId">Voter ID</label>
+        <input class="form-input" type="text" id="regVoterId" placeholder="e.g. ABC1234567" required autocomplete="off" style="text-transform: uppercase;">
+        <div class="id-hint">Format: 3 letters + 7 digits (e.g. ABC1234567)</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="regName">Full Name</label>
+        <input class="form-input" type="text" id="regName" placeholder="Enter your full name" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="regConstituency">Constituency</label>
+        <select class="form-input" id="regConstituency" required>
+          <option value="">Select your constituency</option>
+          <option value="Chennai North">Chennai North</option>
+          <option value="Chennai South">Chennai South</option>
+          <option value="Chennai Central">Chennai Central</option>
+          <option value="Coimbatore">Coimbatore</option>
+          <option value="Madurai">Madurai</option>
+          <option value="Tiruchirappalli">Tiruchirappalli</option>
+          <option value="Salem">Salem</option>
+          <option value="Tirunelveli">Tirunelveli</option>
+          <option value="Vellore">Vellore</option>
+          <option value="Kancheepuram">Kancheepuram</option>
+          <option value="Thanjavur">Thanjavur</option>
+          <option value="Erode">Erode</option>
+          <option value="Tiruppur">Tiruppur</option>
+          <option value="Cuddalore">Cuddalore</option>
+          <option value="Dindigul">Dindigul</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="regDob">Date of Birth</label>
+        <input class="form-input" type="date" id="regDob" required>
+      </div>
+      <button class="submit-btn" type="submit" id="regBtn">📝 Register</button>
+      <div class="error-msg" id="regError"></div>
+      <div class="success-msg hidden" id="regSuccess"></div>
+    </form>
+
+    <div class="form-divider">OR</div>
+
+    <div class="admin-link">
+      Election Commission? <a href="/admin">Admin Login →</a>
+    </div>
+
+    <div class="eci-badge">
+      <span>🏛️</span> Election Commission of India — Secured Portal
+    </div>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin;
+
+function switchTab(tab) {
+  document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+  document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+  document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('regError').textContent = '';
+  document.getElementById('regSuccess').textContent = '';
+  document.getElementById('regSuccess').classList.add('hidden');
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+
+  const voter_id = document.getElementById('loginVoterId').value.trim().toUpperCase();
+  const dob = document.getElementById('loginDob').value;
+
+  if (!voter_id || !dob) {
+    errEl.textContent = 'Please fill in all fields';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Authenticating…';
+
+  try {
+    const res = await fetch(API + '/auth/voter/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ voter_id, dob })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Login failed';
+      btn.disabled = false;
+      btn.textContent = '🔐 Login & Vote';
+      return;
+    }
+
+    // Store token and voter info
+    localStorage.setItem('voter_token', data.token);
+    localStorage.setItem('voter_info', JSON.stringify(data.voter));
+
+    // Redirect to vote page
+    window.location.href = '/vote';
+  } catch (err) {
+    errEl.textContent = 'Connection error. Please try again.';
+    btn.disabled = false;
+    btn.textContent = '🔐 Login & Vote';
+  }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  const btn = document.getElementById('regBtn');
+  const errEl = document.getElementById('regError');
+  const successEl = document.getElementById('regSuccess');
+  errEl.textContent = '';
+  successEl.textContent = '';
+  successEl.classList.add('hidden');
+
+  const voter_id = document.getElementById('regVoterId').value.trim().toUpperCase();
+  const name = document.getElementById('regName').value.trim();
+  const constituency = document.getElementById('regConstituency').value;
+  const dob = document.getElementById('regDob').value;
+
+  if (!voter_id || !name || !constituency || !dob) {
+    errEl.textContent = 'Please fill in all fields';
+    return;
+  }
+
+  // Validate voter ID format
+  if (!/^[A-Z]{3}\d{7}$/.test(voter_id)) {
+    errEl.textContent = 'Invalid Voter ID format. Use 3 letters + 7 digits (e.g. ABC1234567)';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Registering…';
+
+  try {
+    const res = await fetch(API + '/auth/voter/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ voter_id, name, constituency, dob })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Registration failed';
+      btn.disabled = false;
+      btn.textContent = '📝 Register';
+      return;
+    }
+
+    successEl.textContent = '✅ Registration successful! Switch to Login to vote.';
+    successEl.classList.remove('hidden');
+    btn.disabled = false;
+    btn.textContent = '📝 Register';
+
+    // Auto-switch to login after 2s
+    setTimeout(() => switchTab('login'), 2000);
+  } catch (err) {
+    errEl.textContent = 'Connection error. Please try again.';
+    btn.disabled = false;
+    btn.textContent = '📝 Register';
+  }
+}
+
+// If already authenticated, redirect
+if (localStorage.getItem('voter_token')) {
+  window.location.href = '/vote';
+}
+</script>
+</body>
+</html>

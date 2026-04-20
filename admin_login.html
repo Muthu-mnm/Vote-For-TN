@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Election Commission — Admin Login</title>
+<meta name="description" content="Election Commission of India - Admin Portal for Tamil Nadu Election Results">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #06080f;
+    --bg-card: #111425;
+    --border: rgba(255,255,255,0.04);
+    --text-primary: #eaecf5;
+    --text-secondary: #7c82a0;
+    --text-muted: #4a4f6a;
+    --accent: #fbbf24;
+    --accent-glow: rgba(251,191,36,0.10);
+    --danger: #ff5c5c;
+    --success: #34d399;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-primary);
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .ambient { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .ambient .orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.06; }
+  .ambient .orb-1 { width:600px;height:600px;background:#fbbf24;top:-200px;right:-100px;animation:d1 20s ease-in-out infinite; }
+  .ambient .orb-2 { width:400px;height:400px;background:#ef4444;bottom:-150px;left:-80px;animation:d2 24s ease-in-out infinite; }
+  .ambient .orb-3 { width:300px;height:300px;background:#6c8cff;top:60%;left:50%;animation:d3 18s ease-in-out infinite; }
+  @keyframes d1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-70px,50px)} }
+  @keyframes d2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(50px,-40px)} }
+  @keyframes d3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-30px,20px)} }
+
+  .login-container {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 440px;
+    padding: 0 1.5rem;
+    animation: fadeUp 0.6s ease;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+  .login-card {
+    background: linear-gradient(160deg, var(--bg-card) 0%, rgba(17,20,37,0.5) 100%);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px 36px;
+    backdrop-filter: blur(24px);
+    position: relative;
+    overflow: hidden;
+  }
+  .login-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #fbbf24, #ef4444, #fbbf24);
+    opacity: 0.8;
+  }
+
+  .login-icon {
+    font-size: 52px;
+    text-align: center;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  /* Shield Glow */
+  .shield-wrap {
+    text-align: center;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .shield-wrap::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px; height: 80px;
+    background: radial-gradient(circle, rgba(251,191,36,0.12) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: shieldPulse 2.5s ease-in-out infinite;
+  }
+  @keyframes shieldPulse { 0%,100%{opacity:0.6;transform:translate(-50%,-50%) scale(1)} 50%{opacity:1;transform:translate(-50%,-50%) scale(1.2)} }
+
+  .login-title {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.3px;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #ef4444 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+  }
+  .login-subtitle {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 32px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .restricted-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(239,68,68,0.06);
+    border: 1px solid rgba(239,68,68,0.1);
+    border-radius: 12px;
+    padding: 8px 16px;
+    margin-bottom: 24px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--danger);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+  .restricted-badge .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--danger);
+    animation: blink 1.2s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  .form-group { margin-bottom: 18px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .form-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    transition: all 0.25s;
+    outline: none;
+  }
+  .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(251,191,36,0.1);
+    background: rgba(251,191,36,0.02);
+  }
+  .form-input::placeholder { color: var(--text-muted); }
+
+  .password-wrap {
+    position: relative;
+  }
+  .password-wrap .form-input {
+    padding-right: 48px;
+  }
+  .toggle-pass {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+  .toggle-pass:hover { color: var(--text-secondary); }
+
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #f59e0b, #fbbf24, #f59e0b);
+    color: #0a0c14;
+    border: none;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 4px 24px rgba(251,191,36,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
+    letter-spacing: 0.3px;
+    margin-top: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+  .submit-btn::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+  }
+  .submit-btn:hover::after { transform: translateX(100%); }
+  .submit-btn:hover {
+    box-shadow: 0 8px 36px rgba(251,191,36,0.35);
+    transform: translateY(-2px);
+  }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+  .error-msg {
+    color: var(--danger);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 12px;
+    min-height: 18px;
+  }
+
+  .voter-link {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .voter-link a {
+    color: #6c8cff;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .voter-link a:hover { text-decoration: underline; }
+
+  .eci-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+    padding: 12px 16px;
+    background: rgba(251,191,36,0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(251,191,36,0.06);
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .eci-footer span { font-size: 16px; }
+
+  @media (max-width: 480px) {
+    .login-card { padding: 28px 22px; border-radius: 20px; }
+    .login-title { font-size: 20px; }
+    .login-container { padding: 0 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<div class="login-container">
+  <div class="login-card">
+    <div class="shield-wrap">
+      <span class="login-icon">🛡️</span>
+    </div>
+    <h1 class="login-title">Election Commission Portal</h1>
+    <p class="login-subtitle">Authorized Personnel Only</p>
+
+    <div class="restricted-badge">
+      <span class="dot"></span>
+      Restricted Access — Official Use Only
+    </div>
+
+    <form id="adminForm" onsubmit="handleAdminLogin(event)">
+      <div class="form-group">
+        <label class="form-label" for="adminUser">Username</label>
+        <input class="form-input" type="text" id="adminUser" placeholder="Enter admin username" required autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="adminPass">Password</label>
+        <div class="password-wrap">
+          <input class="form-input" type="password" id="adminPass" placeholder="Enter secure password" required>
+          <button type="button" class="toggle-pass" id="togglePass" onclick="togglePassword()" title="Show password">👁️</button>
+        </div>
+      </div>
+      <button class="submit-btn" type="submit" id="adminBtn">🔓 Access Dashboard</button>
+      <div class="error-msg" id="adminError"></div>
+    </form>
+
+    <div class="voter-link">
+      Are you a voter? <a href="/">Go to Voter Login →</a>
+    </div>
+
+    <div class="eci-footer">
+      <span>🇮🇳</span> Election Commission of India — Secure Admin Portal
+    </div>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin;
+
+function togglePassword() {
+  const input = document.getElementById('adminPass');
+  const btn = document.getElementById('togglePass');
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+    btn.title = 'Hide password';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
+    btn.title = 'Show password';
+  }
+}
+
+async function handleAdminLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('adminBtn');
+  const errEl = document.getElementById('adminError');
+  errEl.textContent = '';
+
+  const username = document.getElementById('adminUser').value.trim();
+  const password = document.getElementById('adminPass').value;
+
+  if (!username || !password) {
+    errEl.textContent = 'Please fill in all fields';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Authenticating…';
+
+  try {
+    const res = await fetch(API + '/auth/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Authentication failed';
+      btn.disabled = false;
+      btn.textContent = '🔓 Access Dashboard';
+      return;
+    }
+
+    localStorage.setItem('admin_token', data.token);
+    window.location.href = '/dashboard';
+  } catch (err) {
+    errEl.textContent = 'Connection error. Please try again.';
+    btn.disabled = false;
+    btn.textContent = '🔓 Access Dashboard';
+  }
+}
+
+// If already authenticated, redirect
+if (localStorage.getItem('admin_token')) {
+  window.location.href = '/dashboard';
+}
+</script>
+</body>
+</html>

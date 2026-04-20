@@ -1,0 +1,9 @@
+{
+  "name": "voting-app-root",
+  "version": "1.0.0",
+  "description": "Proxy to backend",
+  "scripts": {
+    "start": "cd backend && npm start",
+    "dev": "cd backend && npm start"
+  }
+}

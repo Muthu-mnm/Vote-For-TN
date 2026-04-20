@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tamil Nadu Election — Live Dashboard</title>
+<meta name="description" content="Real-time election results dashboard for Tamil Nadu Election Poll">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #06080f;
+    --bg-secondary: #0c0e1a;
+    --bg-card: #111425;
+    --bg-card-hover: #161a32;
+    --border: rgba(255,255,255,0.04);
+    --border-glow: rgba(99,135,255,0.3);
+    --text-primary: #eaecf5;
+    --text-secondary: #7c82a0;
+    --text-muted: #4a4f6a;
+    --accent: #6c8cff;
+    --accent-light: #8ba6ff;
+    --accent-glow: rgba(108,140,255,0.10);
+    --success: #34d399;
+    --danger: #ff5c5c;
+    --gold: #fbbf24;
+    --silver: #c0c0c0;
+    --bronze: #cd7f32;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-primary);
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Ambient ── */
+  .ambient {
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none; overflow: hidden;
+  }
+  .ambient .orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.06; }
+  .ambient .orb-1 { width:700px;height:700px;background:#6c8cff;top:-250px;left:-200px;animation:drift1 20s ease-in-out infinite; }
+  .ambient .orb-2 { width:500px;height:500px;background:#d85a30;bottom:-180px;right:-120px;animation:drift2 24s ease-in-out infinite; }
+  .ambient .orb-3 { width:400px;height:400px;background:#1d9e75;top:40%;left:55%;animation:drift3 18s ease-in-out infinite; }
+  .ambient .orb-4 { width:350px;height:350px;background:#ba7517;top:60%;left:15%;animation:drift4 22s ease-in-out infinite; }
+  @keyframes drift1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(90px,70px) scale(1.12)} }
+  @keyframes drift2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-70px,-60px) scale(1.08)} }
+  @keyframes drift3 { 0%,100%{transform:translate(0,0) scale(0.9)} 50%{transform:translate(-50px,40px) scale(1.05)} }
+  @keyframes drift4 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(40px,-30px) scale(0.92)} }
+  .ambient::after {
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    opacity: 0.35;
+  }
+
+  /* ── Layout ── */
+  .dashboard {
+    position: relative; z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+  }
+
+  /* ── Nav Bar ── */
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(17,20,37,0.6);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    margin-bottom: 2rem;
+    animation: fadeDown 0.5s ease;
+  }
+  @keyframes fadeDown { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
+  .nav-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 800; font-size: 17px; letter-spacing: -0.3px;
+  }
+  .nav-brand span { font-size: 22px; }
+  .nav-links { display: flex; align-items: center; gap: 8px; }
+  .nav-link {
+    padding: 8px 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.25s;
+    border: 1px solid transparent;
+  }
+  .nav-link:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+  .nav-link.active {
+    color: var(--accent-light);
+    background: var(--accent-glow);
+    border-color: rgba(108,140,255,0.12);
+  }
+  .live-indicator {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,92,92,0.07);
+    color: var(--danger);
+    font-size: 10px; font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,92,92,0.1);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+  .pulse { width:7px;height:7px;border-radius:50%;background:var(--danger);animation:pulse 1.4s infinite;box-shadow:0 0 10px rgba(255,92,92,0.5); }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(1.6)} }
+
+  /* ── Hero Stats ── */
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: linear-gradient(160deg, var(--bg-card) 0%, rgba(17,20,37,0.6) 100%);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 22px 24px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.5s ease backwards;
+  }
+  .stat-card:nth-child(1) { animation-delay: 0.05s; }
+  .stat-card:nth-child(2) { animation-delay: 0.1s; }
+  .stat-card:nth-child(3) { animation-delay: 0.15s; }
+  .stat-card:nth-child(4) { animation-delay: 0.2s; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--stat-accent, var(--accent));
+    opacity: 0.6;
+  }
+  .stat-card .stat-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .stat-card .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .stat-card .stat-value {
+    font-size: 30px;
+    font-weight: 900;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: -1px;
+    line-height: 1.15;
+    background: linear-gradient(135deg, var(--text-primary) 40%, var(--stat-accent, var(--accent)));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-card .stat-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  /* ── Grid Layout ── */
+  .grid-main {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 20px;
+    margin-bottom: 2rem;
+  }
+
+  /* ── Glass Panel ── */
+  .panel {
+    background: linear-gradient(180deg, var(--bg-card) 0%, rgba(17,20,37,0.5) 100%);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 24px;
+    backdrop-filter: blur(16px);
+    animation: fadeUp 0.6s ease backwards;
+  }
+  .panel-title {
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.3px;
+  }
+  .panel-title .icon { font-size: 18px; }
+
+  /* ── Leaderboard ── */
+  .leaderboard { animation-delay: 0.25s; }
+  .leader-item {
+    display: grid;
+    grid-template-columns: 36px 50px 1fr 70px 64px;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 12px;
+    border-radius: 14px;
+    transition: all 0.25s;
+    border: 1px solid transparent;
+    margin-bottom: 4px;
+  }
+  .leader-item:hover {
+    background: rgba(255,255,255,0.02);
+    border-color: var(--border);
+  }
+  .leader-item.top-1 {
+    background: linear-gradient(135deg, rgba(251,191,36,0.06) 0%, transparent 100%);
+    border-color: rgba(251,191,36,0.08);
+  }
+  .leader-rank {
+    font-size: 14px;
+    font-weight: 900;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .leader-rank.r1 { color: var(--gold); }
+  .leader-rank.r2 { color: var(--silver); }
+  .leader-rank.r3 { color: var(--bronze); }
+  .leader-rank.r-other { color: var(--text-muted); }
+  .leader-logo {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    object-fit: contain;
+    background: rgba(255,255,255,0.04);
+    padding: 4px;
+    border: 1px solid var(--border);
+  }
+  .leader-info .leader-name {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .leader-info .leader-votes {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+  }
+  .leader-bar-wrap {
+    height: 6px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .leader-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 1s cubic-bezier(.4,0,.2,1);
+  }
+  .leader-pct {
+    font-size: 15px;
+    font-weight: 800;
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Doughnut / Pie Panel ── */
+  .chart-panel { animation-delay: 0.3s; }
+  .doughnut-wrap {
+    position: relative;
+    width: 100%; max-width: 260px;
+    margin: 0 auto;
+    aspect-ratio: 1;
+  }
+  .doughnut-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 2;
+  }
+  .doughnut-center .total-value {
+    font-size: 28px;
+    font-weight: 900;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: -1px;
+  }
+  .doughnut-center .total-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .chart-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .legend-label { color: var(--text-secondary); flex: 1; }
+  .legend-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--text-primary);
+  }
+
+  /* ── Bar Chart Panel ── */
+  .bar-chart-panel {
+    animation-delay: 0.35s;
+  }
+  .bar-chart-wrap {
+    position: relative;
+    width: 100%;
+    height: 300px;
+  }
+
+  /* ── Trend Panel ── */
+  .trend-panel {
+    animation-delay: 0.4s;
+  }
+  .trend-chart-wrap {
+    position: relative;
+    width: 100%;
+    height: 300px;
+  }
+
+  /* ── Bottom Grid ── */
+  .grid-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 2rem;
+  }
+
+  /* ── Party Detail Cards ── */
+  .party-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.6s ease 0.45s backwards;
+  }
+  .party-detail {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 20px 14px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(.4,0,.2,1);
+  }
+  .party-detail::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--party-color);
+    opacity: 0.7;
+    border-radius: 18px 18px 0 0;
+  }
+  .party-detail:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    border-color: rgba(255,255,255,0.08);
+  }
+  .party-detail .pd-logo {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    object-fit: contain;
+    background: rgba(255,255,255,0.04);
+    padding: 4px;
+    margin-bottom: 10px;
+    transition: transform 0.3s;
+  }
+  .party-detail:hover .pd-logo { transform: scale(1.08); }
+  .party-detail .pd-name {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .party-detail .pd-votes {
+    font-size: 20px;
+    font-weight: 900;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--party-color);
+    margin-bottom: 2px;
+  }
+  .party-detail .pd-pct {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .party-detail .pd-bar-wrap {
+    height: 5px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 12px;
+  }
+  .party-detail .pd-bar {
+    height: 100%;
+    border-radius: 5px;
+    background: var(--party-color);
+    transition: width 1s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── Last Updated ── */
+  .footer-bar {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+    animation: fadeUp 0.6s ease 0.55s backwards;
+    padding: 12px 0;
+  }
+  .footer-bar span { color: var(--danger); }
+  .footer-bar a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    margin-left: 4px;
+  }
+  .footer-bar a:hover { text-decoration: underline; }
+
+  /* ── Winner Banner ── */
+  .winner-banner {
+    background: linear-gradient(135deg, rgba(251,191,36,0.06) 0%, rgba(251,191,36,0.02) 100%);
+    border: 1px solid rgba(251,191,36,0.1);
+    border-radius: 18px;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.5s ease 0.22s backwards;
+  }
+  .winner-banner .wb-crown { font-size: 36px; }
+  .winner-banner .wb-info { flex: 1; }
+  .winner-banner .wb-label {
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 2px;
+  }
+  .winner-banner .wb-name {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.3px;
+  }
+  .winner-banner .wb-stats {
+    display: flex; gap: 24px;
+  }
+  .winner-banner .wb-stat-item {
+    text-align: center;
+  }
+  .winner-banner .wb-stat-val {
+    font-size: 18px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .winner-banner .wb-stat-lbl {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-primary); }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .grid-main { grid-template-columns: 1fr; }
+    .grid-bottom { grid-template-columns: 1fr; }
+    .hero-stats { grid-template-columns: repeat(2, 1fr); }
+    .party-detail-grid { grid-template-columns: repeat(3, 1fr); }
+    .winner-banner { flex-direction: column; text-align: center; }
+    .winner-banner .wb-stats { justify-content: center; }
+  }
+  @media (max-width: 540px) {
+    .hero-stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .party-detail-grid { grid-template-columns: repeat(2, 1fr); }
+    .nav { flex-direction: column; gap: 10px; }
+    .dashboard { padding: 1rem; }
+    .leader-item { grid-template-columns: 30px 36px 1fr 56px; }
+    .leader-bar-wrap { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+</div>
+
+<div class="dashboard">
+  <!-- NAV -->
+  <nav class="nav" id="navbar">
+    <div class="nav-brand">
+      <span>🛡️</span> EC Dashboard
+    </div>
+    <div class="nav-links">
+      <span class="live-indicator"><span class="pulse"></span>Live</span>
+      <button onclick="adminLogout()" style="padding:8px 16px;background:rgba(255,92,92,0.08);border:1px solid rgba(255,92,92,0.1);border-radius:10px;color:#ff5c5c;font-size:12px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;transition:all 0.2s;">Logout</button>
+    </div>
+  </nav>
+
+  <!-- WINNER BANNER -->
+  <div class="winner-banner" id="winnerBanner" style="display:none;">
+    <div class="wb-crown">👑</div>
+    <div class="wb-info">
+      <div class="wb-label">Current Leader</div>
+      <div class="wb-name" id="winnerName">—</div>
+    </div>
+    <div class="wb-stats">
+      <div class="wb-stat-item">
+        <div class="wb-stat-val" id="winnerVotes">0</div>
+        <div class="wb-stat-lbl">Votes</div>
+      </div>
+      <div class="wb-stat-item">
+        <div class="wb-stat-val" id="winnerPct">0%</div>
+        <div class="wb-stat-lbl">Share</div>
+      </div>
+      <div class="wb-stat-item">
+        <div class="wb-stat-val" id="winnerLead">0</div>
+        <div class="wb-stat-lbl">Lead</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HERO STATS -->
+  <div class="hero-stats" id="heroStats">
+    <div class="stat-card" style="--stat-accent: var(--accent);">
+      <span class="stat-icon">📊</span>
+      <div class="stat-label">Total Votes</div>
+      <div class="stat-value" id="statTotal">0</div>
+      <div class="stat-sub" id="statTotalSub">Counting in progress</div>
+    </div>
+    <div class="stat-card" style="--stat-accent: var(--success);">
+      <span class="stat-icon">🏛️</span>
+      <div class="stat-label">Parties</div>
+      <div class="stat-value" id="statParties">5</div>
+      <div class="stat-sub">competing</div>
+    </div>
+    <div class="stat-card" style="--stat-accent: var(--gold);">
+      <span class="stat-icon">🏆</span>
+      <div class="stat-label">Leading Party</div>
+      <div class="stat-value" id="statLeader">—</div>
+      <div class="stat-sub" id="statLeaderSub">—</div>
+    </div>
+    <div class="stat-card" style="--stat-accent: var(--danger);">
+      <span class="stat-icon">⚡</span>
+      <div class="stat-label">Margin</div>
+      <div class="stat-value" id="statMargin">—</div>
+      <div class="stat-sub" id="statMarginSub">between #1 and #2</div>
+    </div>
+  </div>
+
+  <!-- PARTY DETAIL CARDS -->
+  <div class="party-detail-grid" id="partyDetailGrid"></div>
+
+  <!-- MAIN GRID: Leaderboard + Doughnut -->
+  <div class="grid-main">
+    <div class="panel leaderboard">
+      <div class="panel-title"><span class="icon">🏅</span> Leaderboard</div>
+      <div id="leaderboardList"></div>
+    </div>
+    <div class="panel chart-panel">
+      <div class="panel-title"><span class="icon">🍩</span> Vote Share</div>
+      <div class="doughnut-wrap">
+        <canvas id="doughnutChart"></canvas>
+        <div class="doughnut-center">
+          <div class="total-value" id="doughnutTotal">0</div>
+          <div class="total-label">total</div>
+        </div>
+      </div>
+      <div class="chart-legend" id="chartLegend"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM GRID: Bar Chart + Comparison -->
+  <div class="grid-bottom">
+    <div class="panel bar-chart-panel">
+      <div class="panel-title"><span class="icon">📈</span> Vote Distribution</div>
+      <div class="bar-chart-wrap">
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+    <div class="panel trend-panel">
+      <div class="panel-title"><span class="icon">📉</span> Vote Share Comparison</div>
+      <div class="trend-chart-wrap">
+        <canvas id="polarChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-bar" id="footerBar">
+    Auto-refreshing every 5 seconds <span>●</span> Election Commission of India — Secured Portal
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+<script>
+const API = window.location.origin;
+const adminToken = localStorage.getItem('admin_token');
+
+// Auth guard — redirect if not logged in
+if (!adminToken) {
+  window.location.href = '/admin';
+}
+
+function adminLogout() {
+  localStorage.removeItem('admin_token');
+  window.location.href = '/admin';
+}
+
+const PARTIES = [
+  { id: "tvk",  name: "TVK",  img: "https://pbs.twimg.com/media/HAoUg8SbgAA7T77.jpg", color: "#3266ad", fullName: "Tamilaga Vettri Kazhagam" },
+  { id: "dmk",  name: "DMK",  img: "https://m.media-amazon.com/images/I/513rOuG+0vS._AC_UF894,1000_QL80_.jpg", color: "#1d9e75", fullName: "Dravida Munnetra Kazhagam" },
+  { id: "admk", name: "ADMK", img: "https://upload.wikimedia.org/wikipedia/commons/7/71/Indian_Election_Symbol_Two_Leaves.svg", color: "#ba7517", fullName: "All India Anna DMK" },
+  { id: "ntk",  name: "NTK",  img: "https://pbs.twimg.com/media/GqlumHuXgAAsMEE.jpg", color: "#d85a30", fullName: "Naam Tamilar Katchi" },
+  { id: "nota", name: "NOTA", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/NOTA_Option_Logo_3x4.svg/960px-NOTA_Option_Logo_3x4.svg.png", color: "#6b6e78", fullName: "None Of The Above" }
+];
+
+let votes = {};
+PARTIES.forEach(p => votes[p.id] = 0);
+
+let doughnutChart = null;
+let barChart = null;
+let polarChart = null;
+
+function formatNumber(n) {
+  if (n >= 10000000) return (n / 10000000).toFixed(2).replace(/\.?0+$/, '') + 'Cr';
+  if (n >= 100000) return (n / 100000).toFixed(2).replace(/\.?0+$/, '') + 'L';
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  return n.toLocaleString('en-IN');
+}
+
+function formatExact(n) {
+  return n.toLocaleString('en-IN');
+}
+
+// ── Render everything ──
+function renderDashboard(data) {
+  const total = data.reduce((s, d) => s + d.count, 0);
+
+  // Update votes map
+  PARTIES.forEach(p => {
+    const found = data.find(d => d.party === p.id);
+    votes[p.id] = found ? found.count : 0;
+  });
+
+  // Sort by votes
+  const sorted = [...PARTIES].sort((a, b) => votes[b.id] - votes[a.id]);
+  const leader = sorted[0];
+  const runner = sorted[1];
+
+  // ── Hero Stats
+  document.getElementById('statTotal').textContent = formatNumber(total);
+  document.getElementById('statTotalSub').textContent = formatExact(total) + ' total votes cast';
+  document.getElementById('statLeader').textContent = leader.name;
+  const leaderPct = total > 0 ? (votes[leader.id] / total * 100).toFixed(1) : 0;
+  document.getElementById('statLeaderSub').textContent = leaderPct + '% vote share';
+  const margin = votes[leader.id] - votes[runner.id];
+  document.getElementById('statMargin').textContent = formatNumber(margin);
+  document.getElementById('statMarginSub').textContent = `${leader.name} leads ${runner.name}`;
+
+  // ── Winner Banner
+  const banner = document.getElementById('winnerBanner');
+  banner.style.display = 'flex';
+  document.getElementById('winnerName').textContent = leader.fullName + ' (' + leader.name + ')';
+  document.getElementById('winnerVotes').textContent = formatNumber(votes[leader.id]);
+  document.getElementById('winnerPct').textContent = leaderPct + '%';
+  document.getElementById('winnerLead').textContent = formatNumber(margin);
+
+  // ── Party Detail Cards
+  const grid = document.getElementById('partyDetailGrid');
+  grid.innerHTML = '';
+  sorted.forEach((p, i) => {
+    const pct = total > 0 ? (votes[p.id] / total * 100).toFixed(1) : 0;
+    const card = document.createElement('div');
+    card.className = 'party-detail';
+    card.style.setProperty('--party-color', p.color);
+    card.innerHTML = `
+      <img class="pd-logo" src="${p.img}" alt="${p.name}">
+      <div class="pd-name">${p.name}</div>
+      <div class="pd-votes">${formatNumber(votes[p.id])}</div>
+      <div class="pd-pct">${pct}%</div>
+      <div class="pd-bar-wrap"><div class="pd-bar" style="width:${Math.max(pct, 1)}%;"></div></div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // ── Leaderboard
+  const list = document.getElementById('leaderboardList');
+  list.innerHTML = '';
+  sorted.forEach((p, i) => {
+    const pct = total > 0 ? (votes[p.id] / total * 100).toFixed(1) : 0;
+    const rankClass = i < 3 ? `r${i+1}` : 'r-other';
+    const topClass = i === 0 ? ' top-1' : '';
+    const rankIcon = i === 0 ? '👑' : '#' + (i+1);
+    const item = document.createElement('div');
+    item.className = 'leader-item' + topClass;
+    item.innerHTML = `
+      <div class="leader-rank ${rankClass}">${rankIcon}</div>
+      <img class="leader-logo" src="${p.img}" alt="${p.name}">
+      <div class="leader-info">
+        <div class="leader-name">${p.fullName}</div>
+        <div class="leader-votes">${formatExact(votes[p.id])} votes</div>
+      </div>
+      <div class="leader-bar-wrap">
+        <div class="leader-bar-fill" style="width:${Math.max(pct,1)}%; background:${p.color};"></div>
+      </div>
+      <div class="leader-pct" style="color:${p.color}">${pct}%</div>
+    `;
+    list.appendChild(item);
+  });
+
+  // ── Doughnut
+  const dLabels = PARTIES.map(p => p.name);
+  const dValues = PARTIES.map(p => votes[p.id]);
+  const dColors = PARTIES.map(p => p.color);
+  document.getElementById('doughnutTotal').textContent = formatNumber(total);
+
+  if (doughnutChart) {
+    doughnutChart.data.datasets[0].data = dValues;
+    doughnutChart.update('active');
+  } else {
+    doughnutChart = new Chart(document.getElementById('doughnutChart'), {
+      type: 'doughnut',
+      data: {
+        labels: dLabels,
+        datasets: [{
+          data: dValues,
+          backgroundColor: dColors.map(c => c + 'cc'),
+          borderColor: dColors,
+          borderWidth: 2,
+          hoverOffset: 12,
+          spacing: 3
+        }]
+      },
+      options: {
+        cutout: '68%',
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1a1e35ee',
+            titleColor: '#eaecf5',
+            bodyColor: '#7c82a0',
+            borderColor: 'rgba(255,255,255,0.06)',
+            borderWidth: 1,
+            cornerRadius: 12,
+            padding: 14,
+            titleFont: { weight: '700', family: 'Inter', size: 13 },
+            bodyFont: { family: 'JetBrains Mono', size: 12 },
+            callbacks: {
+              label: ctx => ' ' + formatExact(ctx.raw) + ' votes (' + (total > 0 ? (ctx.raw / total * 100).toFixed(1) : 0) + '%)'
+            }
+          }
+        },
+        animation: { animateRotate: true, duration: 1000, easing: 'easeOutQuart' }
+      }
+    });
+  }
+
+  // ── Legend
+  const legend = document.getElementById('chartLegend');
+  legend.innerHTML = '';
+  sorted.forEach(p => {
+    const pct = total > 0 ? (votes[p.id] / total * 100).toFixed(1) : 0;
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.innerHTML = `
+      <span class="legend-dot" style="background:${p.color}"></span>
+      <span class="legend-label">${p.name}</span>
+      <span class="legend-value">${pct}%</span>
+    `;
+    legend.appendChild(item);
+  });
+
+  // ── Bar Chart
+  if (barChart) {
+    barChart.data.datasets[0].data = PARTIES.map(p => votes[p.id]);
+    barChart.update('active');
+  } else {
+    barChart = new Chart(document.getElementById('barChart'), {
+      type: 'bar',
+      data: {
+        labels: PARTIES.map(p => p.name),
+        datasets: [{
+          label: 'Votes',
+          data: PARTIES.map(p => votes[p.id]),
+          backgroundColor: PARTIES.map(p => p.color + 'aa'),
+          borderColor: PARTIES.map(p => p.color),
+          borderWidth: 2,
+          borderRadius: 12,
+          borderSkipped: false,
+          barPercentage: 0.7
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1a1e35ee',
+            titleColor: '#eaecf5',
+            bodyColor: '#7c82a0',
+            borderColor: 'rgba(255,255,255,0.06)',
+            borderWidth: 1,
+            cornerRadius: 12,
+            padding: 14,
+            callbacks: { label: ctx => ' ' + formatExact(ctx.raw) + ' votes' }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255,255,255,0.025)' },
+            ticks: { font: { size:11, family:'JetBrains Mono' }, color:'#4a4f6a', callback: v => formatNumber(v) },
+            border: { display: false }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size:13, family:'Inter', weight:'700' }, color:'#7c82a0' },
+            border: { display: false }
+          }
+        },
+        animation: { duration: 900, easing: 'easeOutQuart' }
+      }
+    });
+  }
+
+  // ── Polar Area Chart
+  if (polarChart) {
+    polarChart.data.datasets[0].data = PARTIES.map(p => votes[p.id]);
+    polarChart.update('active');
+  } else {
+    polarChart = new Chart(document.getElementById('polarChart'), {
+      type: 'polarArea',
+      data: {
+        labels: PARTIES.map(p => p.name),
+        datasets: [{
+          data: PARTIES.map(p => votes[p.id]),
+          backgroundColor: PARTIES.map(p => p.color + '80'),
+          borderColor: PARTIES.map(p => p.color),
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: '#7c82a0',
+              font: { size: 12, family: 'Inter', weight: '600' },
+              padding: 16,
+              usePointStyle: true,
+              pointStyleWidth: 10
+            }
+          },
+          tooltip: {
+            backgroundColor: '#1a1e35ee',
+            titleColor: '#eaecf5',
+            bodyColor: '#7c82a0',
+            borderColor: 'rgba(255,255,255,0.06)',
+            borderWidth: 1,
+            cornerRadius: 12,
+            padding: 14,
+            callbacks: {
+              label: ctx => ' ' + formatExact(ctx.raw) + ' votes (' + (total > 0 ? (ctx.raw / total * 100).toFixed(1) : 0) + '%)'
+            }
+          }
+        },
+        scales: {
+          r: {
+            grid: { color: 'rgba(255,255,255,0.04)' },
+            ticks: { display: false },
+            pointLabels: { display: false }
+          }
+        },
+        animation: { duration: 1000, easing: 'easeOutQuart' }
+      }
+    });
+  }
+}
+
+// ── Load Results ──
+function loadResults() {
+  fetch(API + '/results', {
+    headers: { 'Authorization': 'Bearer ' + adminToken }
+  })
+    .then(r => {
+      if (r.status === 401 || r.status === 403) {
+        adminLogout();
+        return;
+      }
+      return r.json();
+    })
+    .then(data => { if (data) renderDashboard(data); })
+    .catch(err => {
+      console.warn('Failed to fetch results:', err);
+    });
+}
+
+// ── Socket.IO for real-time updates ──
+try {
+  const socket = io(API);
+  socket.on('vote_update', () => loadResults());
+} catch(e) { /* fallback to polling */ }
+
+// ── Init ──
+loadResults();
+setInterval(loadResults, 5000);
+</script>
+</body>
+</html>
