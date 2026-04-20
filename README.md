@@ -316,13 +316,7 @@ cd "e:\voting app\backend"
 npm install
 ```
 
-### Environment Variables — [.env](file:///e:/voting%20app/backend/.env)
-```env
-PORT=3000
-JWT_SECRET=tn_election_2026_secret_key_x9k2m
-ADMIN_USERNAME=election_commission
-ADMIN_PASSWORD=EC@TN2026secure
-```
+
 
 ### Start Server
 ```bash
@@ -336,12 +330,7 @@ node server.js
 
 The server starts at **http://localhost:3000**
 
-### Seed Data (Optional)
-```bash
-cd backend
-node seed.js          # 150K random votes
-node rank_votes.js    # Fixed distribution
-```
+
 
 ---
 
