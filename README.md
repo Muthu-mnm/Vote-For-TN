@@ -221,7 +221,7 @@ sequenceDiagram
 - Auto-redirects authenticated admins to `/dashboard`
 
 ### 4. Results Dashboard — [dashboard.html](file:///e:/voting%20app/dashboard.html)
-![Live Dashboard](assets/4_dashboard.png)
+![Live Dashboard](assets/4_dashboard.jpeg)
 - **Auth-gated**: Redirects to `/admin` if no admin token
 - **Real-time updates** via Socket.IO + 5-second polling fallback
 - **Components**:
